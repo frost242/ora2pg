@@ -9695,6 +9695,47 @@ sub _get_types
 	return \@types;
 }
 
+
+=head2 _policy_info
+
+This function implements an Oracle VPD Policies.
+
+Returns a hash of all object names affected by a VPD policy.
+
+=cut
+
+sub _get_policies
+{
+	my ($self, $dbh, $name) = @_;
+
+	# Retrieve all user defined types
+	my $str = "SELECT DISTINCT OBJECT_NAME, POLICY_NAME FROM $self->{prefix}_POLICIES WHERE ";
+	$str .= " AND ENABLE='YES'";
+	if ($self->{schema}) {
+		$str .= "AND OWNER='$self->{schema}' ";
+	} else {
+		$str .= "AND OWNER NOT IN ('" . join("','", @{$self->{sysusers}}) . "') ";
+	}
+	$str .= " ORDER BY OBJECT_NAME";
+
+	my $sth = $dbh->prepare($str) or $self->logit("FATAL: " . $dbh->errstr . "\n", 0, 1);
+	$sth->execute or $self->logit("FATAL: " . $dbh->errstr . "\n", 0, 1);
+
+	my @policies = ();
+	while (my $row = $sth->fetch) {
+		if (!$self->{schema} && $self->{export_schema}) {
+			$row->[0] = "$row->[1].$row->[0]";
+		}
+		$self->logit("\tFound Policy $row->[1]\n", 1);
+		my %tmp = ();
+		$tmp{name} = $row->[0];
+		$tmp{policy} = $row->[1];
+		push(@policies, \%tmp);
+	}
+
+	return \@policies;
+}
+
 =head2 _table_info
 
 This function retrieves all Oracle-native tables information.
