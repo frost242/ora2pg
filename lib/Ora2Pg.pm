@@ -3047,6 +3047,22 @@ sub _directories
 
 }
 
+=head2 _policies
+
+This function is used to retrieve all Oracle VPD policies information.
+
+Sets the main hash $self->{policies}.
+
+=cut
+
+sub _directories
+{
+	my ($self) = @_;
+
+	$self->logit("Retrieving policies information...\n", 1);
+	%{$self->{policies}} = $self->_get_policies();
+
+}
 
 sub get_replaced_tbname
 {
